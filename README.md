@@ -82,7 +82,6 @@ Before creating new issues please check to see if there is an existing one, sear
 ## Developers
 
 Please refer to the development section in the [docs/development](https://github.com/iNavFlight/inav/tree/master/docs/development) folder.
-add: Jeti-flight starts working :-)
 
 
 ## INAV Releases
