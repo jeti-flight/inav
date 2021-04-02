@@ -12,7 +12,7 @@
 * Runs on the most popular F4 and F7 flight controllers
 * Outstanding performance out of the box
 * Position Hold, Altitude Hold, Return To Home and Missions
-* Excellent support for fixed wing UAVs: airplanes, flying wings 
+* Excellent support for fixed wing UAVs: airplanes, flying wings
 * Fully configurable mixer that allows to run any hardware you want: multirotor, fixed wing, rovers, boats and other experimental devices
 * Multiple sensor support: GPS, Pitot tube, sonar, lidar, temperature, ESC with BlHeli_32 telemetry
 * SmartAudio and IRC Tramp VTX support
@@ -43,9 +43,10 @@ Users of OpenTX radios (Taranis, Horus, Jumper, Radiomaster, Nirvana) can use IN
 
 ## Installation
 
-See: https://github.com/iNavFlight/inav/blob/master/docs/Installation.md
+See: <https://github.com/iNavFlight/inav/blob/master/docs/Installation.md>
 
 ## Documentation, support and learning resources
+
 * [Fixed Wing Guide](docs/INAV_Fixed_Wing_Setup_Guide.pdf)
 * [Autolaunch Guide](docs/INAV_Autolaunch.pdf)
 * [Modes Guide](docs/INAV_Modes.pdf)
@@ -73,9 +74,9 @@ A good place to start is Telegram channel or Facebook group. Drop in, say hi.
 
 Github issue tracker is a good place to search for existing issues or report a new bug/feature request:
 
-https://github.com/iNavFlight/inav/issues
+<https://github.com/iNavFlight/inav/issues>
 
-https://github.com/iNavFlight/inav-configurator/issues
+<https://github.com/iNavFlight/inav-configurator/issues>
 
 Before creating new issues please check to see if there is an existing one, search first otherwise you waste peoples time when they could be coding instead!
 
@@ -83,6 +84,6 @@ Before creating new issues please check to see if there is an existing one, sear
 
 Please refer to the development section in the [docs/development](https://github.com/iNavFlight/inav/tree/master/docs/development) folder.
 
-
 ## INAV Releases
-https://github.com/iNavFlight/inav/releases
+
+<https://github.com/iNavFlight/inav/releases>
