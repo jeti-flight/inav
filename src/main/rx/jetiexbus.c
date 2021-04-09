@@ -46,6 +46,7 @@
 #include "build/debug.h"
 
 #include "common/utils.h"
+#include "common/log.h"
 
 #include "drivers/serial.h"
 #include "drivers/serial_uart.h"
@@ -408,6 +409,9 @@ static uint16_t jetiExBusReadRawRC(const rxRuntimeConfig_t *rxRuntimeConfig, uin
 
 void initJetiExBusTelemetry(void)
 {
+    //debug to msp
+    LOG_D(SYSTEM,"Jeti - init telemetry\n");
+
     // Init Ex Bus Frame header
     jetiExBusTelemetryFrame[EXBUS_HEADER_SYNC] = 0x3B;       // Startbytes
     jetiExBusTelemetryFrame[EXBUS_HEADER_REQ] = 0x01;

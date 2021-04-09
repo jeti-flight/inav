@@ -18,7 +18,7 @@
 #pragma once
 
 //need to define twice and fixed?
-#define USE_TELEMETRY
+//#define USE_TELEMETRY
 
 #if defined(STM32F7) || defined(STM32H7)
 #define USE_ITCM_RAM
@@ -74,7 +74,7 @@
 #define USE_TELEMETRY
 #define USE_TELEMETRY_LTM
 #define USE_TELEMETRY_FRSKY
-//added with the correct writing
+//added with the correct spelling
 #define USE_TELEMETRY_JETIEXBUS
 
 #if defined(STM_FAST_TARGET)
