@@ -567,6 +567,8 @@ main_sources(COMMON_SRC
     telemetry/ibus_shared.h
     telemetry/ibus.c
     telemetry/ibus.h
+    telemetry/jetiexbus.c
+    telemetry/jetiexbus.h
     telemetry/ltm.c
     telemetry/ltm.h
     telemetry/mavlink.c

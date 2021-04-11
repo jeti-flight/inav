@@ -1,5 +1,5 @@
 /*
- * This file is part of Cleanflight and iNavFlight.
+ * This file is part of Cleanflight.
  *
  * Cleanflight is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,6 +17,4 @@
 
 #pragma once
 
-void initJetiExBusTelemetry(void);
-void checkJetiExBusTelemetryState(void);
-void handleJetiExBusTelemetry(void);
+bool jetiExBusInit(const rxConfig_t *rxConfig, rxRuntimeConfig_t *rxRuntimeConfig);
