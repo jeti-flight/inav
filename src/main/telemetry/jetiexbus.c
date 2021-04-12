@@ -259,6 +259,9 @@ void createExTelemetrieTextMessage(uint8_t *exMessage, uint8_t messageID, const 
     exMessage[EXTEL_HEADER_ID] = messageID & 0x0F;                                  // Sensor ID (%16)
     exMessage[EXTEL_HEADER_DATA] = (labelLength << 3) + unitLength;
 
+    LOG_D(SYSTEM,"Jeti - message id telemetry %x\n", messageID);
+    LOG_D(SYSTEM,"Jeti - label %s\n", sensor->label);
+
     memcpy(&exMessage[EXTEL_HEADER_DATA + 1], sensor->label, labelLength);
     memcpy(&exMessage[EXTEL_HEADER_DATA + 1 + labelLength], sensor->unit, unitLength);
 
