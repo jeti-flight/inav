@@ -79,8 +79,8 @@
 #define EXTEL_SYNC_LEN      1
 #define EXTEL_CRC_LEN       1
 #define EXTEL_HEADER_LEN    6
-// in betaflight is 26
-#define EXTEL_MAX_LEN       29
+// in betaflight is 26 , inav was 29
+#define EXTEL_MAX_LEN       26
 #define EXTEL_OVERHEAD      (EXTEL_SYNC_LEN + EXTEL_HEADER_LEN + EXTEL_CRC_LEN)
 #define EXTEL_MAX_PAYLOAD   (EXTEL_MAX_LEN - EXTEL_OVERHEAD)
 #define EXBUS_MAX_REQUEST_BUFFER_SIZE   (EXBUS_OVERHEAD + EXTEL_MAX_LEN)
@@ -127,51 +127,17 @@ typedef struct exBusSensor_s{
 
 #define DECIMAL_MASK(decimals) (decimals << 5)
 
-// start old cf definitions
-// list of telemetry messages
-// after every 15 sensors a new header has to be inserted (e.g. "CF-Dev 1.12 S2")
-/*
-exBusSensor_t jetiExSensors[] = {
-    { "CF-Dev 1.12 S1", "",     0,      0,             0 },                     // device descripton
-    { "Voltage",        "V",    0,      EX_TYPE_14b,   DECIMAL_MASK(1) },
-    { "Current",        "A",    0,      EX_TYPE_14b,   DECIMAL_MASK(2) },
-    { "Altitude",       "m",    0,      EX_TYPE_14b,   DECIMAL_MASK(1) },
-    { "Capacity",       "mAh",  0,      EX_TYPE_22b,   DECIMAL_MASK(0) },
-    { "frames lost",    " ",    0,      EX_TYPE_22b,   DECIMAL_MASK(0) },       // for debug only
-    { "time Diff",      "us",   0,      EX_TYPE_14b,   DECIMAL_MASK(0) }        // for debug only
-};
-*/
-
-// after every 15 sensors increment the step by 2 (e.g. ...EX_VAL15, EX_VAL16 = 17) to skip the device description
-/*
-enum exSensors_e {
-    EX_VOLTAGE = 1,
-    EX_CURRENT,
-    EX_ALTITUDE,
-    EX_CAPACITY,
-    EX_FRAMES_LOST,                                                             // for debug only
-    EX_TIME_DIFF                                                                // for debug only
-};
-*/
-// end old cf definitions
-
-// start re-use definitions from BetaFlight
-// list of telemetry messages
-// after every 15 sensors a new header has to be inserted (e.g. "BF D2")
-// const definition in betaflight
 const exBusSensor_t jetiExSensors[] = {
     {"iNav D1",         "",         EX_TYPE_DES,    0              },     // device descripton
     {"Voltage",         "V",        EX_TYPE_14b,    DECIMAL_MASK(1)},
     {"Current",         "A",        EX_TYPE_14b,    DECIMAL_MASK(2)},
-    //betaflight
-    {"Altitude",        "m",        EX_TYPE_14b,    DECIMAL_MASK(2)},
-    {"Baro Altitude",   "m",        EX_TYPE_14b,    DECIMAL_MASK(2)},
     {"Capacity",        "mAh",      EX_TYPE_22b,    DECIMAL_MASK(0)},
     {"Power",           "W",        EX_TYPE_22b,    DECIMAL_MASK(1)},
+    {"Baro Altitude",   "m",        EX_TYPE_14b,    DECIMAL_MASK(2)},
+    {"Vario",           "m/s",      EX_TYPE_22b,    DECIMAL_MASK(2)},
     {"Roll angle",      "\xB0",     EX_TYPE_22b,    DECIMAL_MASK(1)},
     {"Pitch angle",     "\xB0",     EX_TYPE_22b,    DECIMAL_MASK(1)},
     {"Heading",         "\xB0",     EX_TYPE_22b,    DECIMAL_MASK(1)},
-    {"Vario",           "m/s",      EX_TYPE_22b,    DECIMAL_MASK(2)},
     {"GPS Sats",        "",         EX_TYPE_22b,    DECIMAL_MASK(0)},
     {"GPS Long",        "",         EX_TYPE_GPS,    DECIMAL_MASK(0)},
     {"GPS Lat",         "",         EX_TYPE_GPS,    DECIMAL_MASK(0)},
@@ -192,13 +158,13 @@ const exBusSensor_t jetiExSensors[] = {
 enum exSensors_e {
     EX_VOLTAGE = 1,
     EX_CURRENT,
-    EX_ALTITUDE,
     EX_CAPACITY,
     EX_POWER,
+    EX_ALTITUDE,
+    EX_VARIO,
     EX_ROLL_ANGLE,
     EX_PITCH_ANGLE,
     EX_HEADING,
-    EX_VARIO,
     EX_GPS_SATS,
     EX_GPS_LONG,
     EX_GPS_LAT,
@@ -220,20 +186,15 @@ union{
     char    vBytes[4];
 } exGps;
 
-// end re-use definitions from BetaFlight
-
 #define JETI_EX_SENSOR_COUNT (ARRAYLEN(jetiExSensors))
 
 static uint8_t jetiExBusTelemetryFrame[40];
 static uint8_t jetiExBusTransceiveState = EXBUS_TRANS_RX;
 
-//todo add item
-//static void sendJetiExBusTelemetry(uint8_t packetID);
 static uint8_t sendJetiExBusTelemetry(uint8_t packetID, uint8_t item);
 
 uint8_t calcCRC8(uint8_t *pt, uint8_t msgLen);
 
-//fuctions from betaflight
 static uint8_t firstActiveSensor = 0;
 static uint8_t getNextActiveSensor(uint8_t currentSensor);
 static uint32_t exSensorEnabled = 0;
@@ -338,24 +299,6 @@ void initJetiExBusTelemetry(void)
     firstActiveSensor = getNextActiveSensor(0);     // find the first active sensor
 }
 
-
-/* old inav
-void createExTelemetrieTextMessage(uint8_t *exMessage, uint8_t messageID, const exBusSensor_t *sensor)
-{
-    uint8_t labelLength = strlen(sensor->label);
-    uint8_t unitLength = strlen(sensor->unit);
-
-    exMessage[EXTEL_HEADER_TYPE_LEN] = EXTEL_OVERHEAD + labelLength + unitLength;
-    exMessage[EXTEL_HEADER_LSN_LB] = messageID & 0xF0;                              // Device ID
-    exMessage[EXTEL_HEADER_ID] = messageID & 0x0F;                                  // Sensor ID (%16)
-    exMessage[EXTEL_HEADER_DATA] = (labelLength << 3) + unitLength;
-
-    memcpy(&exMessage[EXTEL_HEADER_DATA + 1], sensor->label, labelLength);
-    memcpy(&exMessage[EXTEL_HEADER_DATA + 1 + labelLength], sensor->unit, unitLength);
-
-    exMessage[exMessage[EXTEL_HEADER_TYPE_LEN] + EXTEL_CRC_LEN] = calcCRC8(&exMessage[EXTEL_HEADER_TYPE_LEN], exMessage[EXTEL_HEADER_TYPE_LEN]);
-}
-*/
 
 void createExTelemetryTextMessage(uint8_t *exMessage, uint8_t messageID, const exBusSensor_t *sensor)
 {
@@ -503,50 +446,6 @@ uint8_t getNextActiveSensor(uint8_t currentSensor)
     return currentSensor;
 }
 
-/* old inav
-uint8_t createExTelemetrieValueMessage(uint8_t *exMessage, uint8_t itemStart)
-{
-    uint8_t item = itemStart;
-    uint8_t iCount;
-    uint8_t messageSize;
-    uint32_t sensorValue;
-
-    if ((item & 0x0F) == 0)
-        item++;
-
-    if (item >= JETI_EX_SENSOR_COUNT)
-        item = 1;
-
-    exMessage[EXTEL_HEADER_LSN_LB] = item & 0xF0;                                   // Device ID
-    uint8_t *p = &exMessage[EXTEL_HEADER_ID];
-
-    while (item <= (itemStart | 0x0F)) {
-        *p++ = ((item & 0x0F) << 4) | jetiExSensors[item].exDataType;               // Sensor ID (%16) | EX Data Type
-
-        sensorValue = jetiExSensors[item].value;
-        iCount = exDataTypeLen[jetiExSensors[item].exDataType];
-        while (iCount > 1) {
-            *p++ = sensorValue;
-            sensorValue = sensorValue >> 8;
-            iCount--;
-        }
-        *p++ = (sensorValue & 0x9F) | jetiExSensors[item].decimals;
-
-        item++;
-        if (item >= JETI_EX_SENSOR_COUNT)
-            break;
-        if (EXTEL_MAX_PAYLOAD <= ((p-&exMessage[EXTEL_HEADER_ID]) + exDataTypeLen[jetiExSensors[item].exDataType]) + 1)
-            break;
-    }
-
-    messageSize = (EXTEL_HEADER_LEN + (p-&exMessage[EXTEL_HEADER_ID]));
-    exMessage[EXTEL_HEADER_TYPE_LEN] = EXTEL_DATA_MSG | messageSize;
-    exMessage[messageSize + EXTEL_CRC_LEN] = calcCRC8(&exMessage[EXTEL_HEADER_TYPE_LEN], messageSize);
-
-    return item;        // return the next item
-}
-*/
-//new from betaflight
 uint8_t createExTelemetryValueMessage(uint8_t *exMessage, uint8_t item)
 {
     uint8_t startItem = item;
@@ -612,84 +511,6 @@ void checkJetiExBusTelemetryState(void)
     return;
 }
 
-/* old inav
-void handleJetiExBusTelemetry(void)
-{
-    static uint16_t framesLost = 0; // only for debug
-    uint32_t timeDiff;
-    // Check if we shall reset frame position due to time
-
-    if (jetiExBusRequestState == EXBUS_STATE_RECEIVED) {
-
-        // to prevent timing issues from request to answer - max. 4ms
-        timeDiff = micros() - jetiTimeStampRequest;
-
-        if (timeDiff > 3000) {   // include reserved time
-            jetiExBusRequestState = EXBUS_STATE_ZERO;
-            framesLost++;
-            return;
-        }
-
-        if ((jetiExBusRequestFrame[EXBUS_HEADER_DATA_ID] == EXBUS_EX_REQUEST) && (calcCRC16(jetiExBusRequestFrame, jetiExBusRequestFrame[EXBUS_HEADER_MSG_LEN]) == 0)) {
-            jetiExSensors[EX_VOLTAGE].value = getBatteryVoltage() / 10;
-            jetiExSensors[EX_CURRENT].value = getAmperage();
-            jetiExSensors[EX_ALTITUDE].value = baro.BaroAlt / 10;
-            jetiExSensors[EX_CAPACITY].value = getMAhDrawn();
-            jetiExSensors[EX_FRAMES_LOST].value = framesLost;
-            jetiExSensors[EX_TIME_DIFF].value = timeDiff;
-
-            // switch to TX mode
-            if (uartTotalRxBytesWaiting(jetiExBusPort) == 0) {
-                serialSetMode(jetiExBusPort, MODE_TX);
-                jetiExBusTransceiveState = EXBUS_TRANS_TX;
-                sendJetiExBusTelemetry(jetiExBusRequestFrame[EXBUS_HEADER_PACKET_ID]);
-                jetiExBusRequestState = EXBUS_STATE_PROCESSED;
-            }
-        } else {
-            jetiExBusRequestState = EXBUS_STATE_ZERO;
-            return;
-        }
-    }
-
-    // check the state if transmit is ready
-    if (jetiExBusTransceiveState == EXBUS_TRANS_IS_TX_COMPLETED) {
-        if (isSerialTransmitBufferEmpty(jetiExBusPort)) {
-            serialSetMode(jetiExBusPort, MODE_RX);
-            jetiExBusTransceiveState = EXBUS_TRANS_RX;
-            jetiExBusRequestState = EXBUS_STATE_ZERO;
-        }
-    }
-}
-
-void sendJetiExBusTelemetry(uint8_t packetID)
-{
-    static uint8_t sensorDescriptionCounter = 0;
-    static uint8_t sensorValueCounter = 1;
-    static uint8_t requestLoop = 0;
-    uint8_t *jetiExTelemetryFrame = &jetiExBusTelemetryFrame[EXBUS_HEADER_DATA];
-
-    if (requestLoop == 100){              //every nth request send the name of a value
-        if (sensorDescriptionCounter == JETI_EX_SENSOR_COUNT )
-            sensorDescriptionCounter = 0;
-
-        createExTelemetrieTextMessage(jetiExTelemetryFrame, sensorDescriptionCounter, &jetiExSensors[sensorDescriptionCounter]);
-        createExBusMessage(jetiExBusTelemetryFrame, jetiExTelemetryFrame, packetID);
-
-        requestLoop = 0;
-        sensorDescriptionCounter++;
-    } else {
-        sensorValueCounter = createExTelemetrieValueMessage(jetiExTelemetryFrame, sensorValueCounter);
-        createExBusMessage(jetiExBusTelemetryFrame, jetiExTelemetryFrame, packetID);
-    }
-
-    for (uint8_t iCount = 0; iCount < jetiExBusTelemetryFrame[EXBUS_HEADER_MSG_LEN]; iCount++) {
-        serialWrite(jetiExBusPort, jetiExBusTelemetryFrame[iCount]);
-    }
-    jetiExBusTransceiveState = EXBUS_TRANS_IS_TX_COMPLETED;
-    requestLoop++;
-}
-*/
-//new betaflight
 
 void handleJetiExBusTelemetry(void)
 {
