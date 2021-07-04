@@ -61,6 +61,7 @@
 #include "sensors/sensors.h"
 #include "sensors/battery.h"
 #include "sensors/barometer.h"
+#include "sensors/acceleration.h"
 
 #include "telemetry/telemetry.h"
 #include "telemetry/jetiexbus.h"
@@ -113,6 +114,8 @@ typedef struct exBusSensor_s{
     const uint8_t decimals;
 } exBusSensor_t;
 
+fpVector3_t ex_measuredAcc[3];
+
 #define DECIMAL_MASK(decimals) (decimals << 5)
 
 // start old cf definitions
@@ -148,9 +151,9 @@ enum exSensors_e {
 // after every 15 sensors a new header has to be inserted (e.g. "BF D2")
 exBusSensor_t jetiExSensors[] = {
     {"iNav D1",         "",         0,  0,              0              },     // device descripton
-    {"Voltage",         "V",        0,  EX_TYPE_14b,    DECIMAL_MASK(1)},
+    {"Voltage",         "V",        0,  EX_TYPE_14b,    DECIMAL_MASK(2)},
     {"Current",         "A",        0,  EX_TYPE_14b,    DECIMAL_MASK(2)},
-    {"Altitude",        "m",        0,  EX_TYPE_14b,    DECIMAL_MASK(2)},
+    {"Altitude",        "m",        0,  EX_TYPE_14b,    DECIMAL_MASK(1)},
     {"Capacity",        "mAh",      0,  EX_TYPE_22b,    DECIMAL_MASK(0)},
     {"Power",           "W",        0,  EX_TYPE_22b,    DECIMAL_MASK(1)},
     {"Roll angle",      "\xB0",     0,  EX_TYPE_22b,    DECIMAL_MASK(1)},
@@ -166,9 +169,9 @@ exBusSensor_t jetiExSensors[] = {
     {"iNav D2",         "",         0,  0,              0              },     // device descripton
     {"GPS Heading",     "\xB0",     0,  EX_TYPE_22b,    DECIMAL_MASK(1)},
     {"GPS Altitude",    "m",        0,  EX_TYPE_22b,    DECIMAL_MASK(2)},
-    {"G-Force X",       "",         0,  EX_TYPE_22b,    DECIMAL_MASK(3)},
-    {"G-Force Y",       "",         0,  EX_TYPE_22b,    DECIMAL_MASK(3)},
-    {"G-Force Z",       "",         0,  EX_TYPE_22b,    DECIMAL_MASK(3)},
+    {"G-Force X",       "",         0,  EX_TYPE_22b,    DECIMAL_MASK(2)},
+    {"G-Force Y",       "",         0,  EX_TYPE_22b,    DECIMAL_MASK(2)},
+    {"G-Force Z",       "",         0,  EX_TYPE_22b,    DECIMAL_MASK(2)},
     {"frames lost",    " ",         0,  EX_TYPE_22b,    DECIMAL_MASK(0)},       // for debug only
     {"time Diff",      "us",        0,  EX_TYPE_14b,    DECIMAL_MASK(0)}        // for debug only
 };
@@ -350,10 +353,17 @@ void handleJetiExBusTelemetry(void)
         }
 
         if ((jetiExBusRequestFrame[EXBUS_HEADER_DATA_ID] == EXBUS_EX_REQUEST) && (calcCRC16(jetiExBusRequestFrame, jetiExBusRequestFrame[EXBUS_HEADER_MSG_LEN]) == 0)) {
-            jetiExSensors[EX_VOLTAGE].value = getBatteryVoltage() / 10;
+            jetiExSensors[EX_VOLTAGE].value = getBatteryVoltage();
             jetiExSensors[EX_CURRENT].value = getAmperage();
-            jetiExSensors[EX_ALTITUDE].value = baro.BaroAlt / 10;
+            jetiExSensors[EX_ALTITUDE].value = baro.BaroAlt / 100;
             jetiExSensors[EX_CAPACITY].value = getMAhDrawn();
+            // add other values here
+            accGetMeasuredAcceleration(ex_measuredAcc);
+            jetiExSensors[EX_GFORCE_X].value = ex_measuredAcc->v[0] / 10;
+            jetiExSensors[EX_GFORCE_Y].value = ex_measuredAcc->v[1] / 10;
+            jetiExSensors[EX_GFORCE_Z].value = ex_measuredAcc->v[2] / GRAVITY_CMSS * 100 ;
+
+            // debug at the end
             jetiExSensors[EX_FRAMES_LOST].value = framesLost;
             jetiExSensors[EX_TIME_DIFF].value = timeDiff;
 
