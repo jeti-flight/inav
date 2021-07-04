@@ -129,11 +129,11 @@ typedef struct exBusSensor_s{
 
 const exBusSensor_t jetiExSensors[] = {
     {"iNav D1",         "",         EX_TYPE_DES,    0              },     // device descripton
-    {"Voltage",         "V",        EX_TYPE_14b,    DECIMAL_MASK(1)},
-    {"Current",         "A",        EX_TYPE_14b,    DECIMAL_MASK(2)},
+    {"Voltage",         "V",        EX_TYPE_22b,    DECIMAL_MASK(1)},
+    {"Current",         "A",        EX_TYPE_22b,    DECIMAL_MASK(2)},
     {"Capacity",        "mAh",      EX_TYPE_22b,    DECIMAL_MASK(0)},
     {"Power",           "W",        EX_TYPE_22b,    DECIMAL_MASK(1)},
-    {"Baro Altitude",   "m",        EX_TYPE_14b,    DECIMAL_MASK(2)},
+    {"Baro Altitude",   "m",        EX_TYPE_22b,    DECIMAL_MASK(2)},
     {"Vario",           "m/s",      EX_TYPE_22b,    DECIMAL_MASK(2)},
     {"Roll angle",      "\xB0",     EX_TYPE_22b,    DECIMAL_MASK(1)},
     {"Pitch angle",     "\xB0",     EX_TYPE_22b,    DECIMAL_MASK(1)},
@@ -151,7 +151,7 @@ const exBusSensor_t jetiExSensors[] = {
     {"G-Force Y",       "",         EX_TYPE_22b,    DECIMAL_MASK(3)},
     {"G-Force Z",       "",         EX_TYPE_22b,    DECIMAL_MASK(3)},
     {"frames lost",     " ",        EX_TYPE_22b,    DECIMAL_MASK(0)},       // for debug only
-    {"time Diff",       "us",       EX_TYPE_14b,    DECIMAL_MASK(0)}        // for debug only
+    {"time Diff",       "us",       EX_TYPE_22b,    DECIMAL_MASK(0)}        // for debug only
 };
 
 // after every 15 sensors increment the step by 2 (e.g. ...EX_VAL15, EX_VAL16 = 17) to skip the device description
@@ -210,6 +210,7 @@ void enableGpsTelemetry(bool enable)
         bitArraySet(&exSensorEnabled, EX_GPS_DIRECTION_TO_HOME);
         bitArraySet(&exSensorEnabled, EX_GPS_HEADING);
         bitArraySet(&exSensorEnabled, EX_GPS_ALTITUDE);
+        LOG_D(SYSTEM,"Jeti - Telemetry - EX_GPS* enabled\n");
     } else {
         bitArrayClr(&exSensorEnabled, EX_GPS_SATS);
         bitArrayClr(&exSensorEnabled, EX_GPS_LONG);
@@ -219,6 +220,7 @@ void enableGpsTelemetry(bool enable)
         bitArrayClr(&exSensorEnabled, EX_GPS_DIRECTION_TO_HOME);
         bitArrayClr(&exSensorEnabled, EX_GPS_HEADING);
         bitArrayClr(&exSensorEnabled, EX_GPS_ALTITUDE);
+        LOG_D(SYSTEM,"Jeti - Telemetry - EX_GPS* disabled\n");
     }
 }
 
@@ -243,7 +245,7 @@ uint8_t calcCRC8(uint8_t *pt, uint8_t msgLen)
 void initJetiExBusTelemetry(void)
 {
     //debug to msp
-    LOG_D(SYSTEM,"Jeti - init telemetry\n");
+    LOG_D(SYSTEM,"Jeti - init telemetry - start\n");
 
     // Init Ex Bus Frame header
     jetiExBusTelemetryFrame[EXBUS_HEADER_SYNC] = 0x3B;       // Startbytes
@@ -265,20 +267,25 @@ void initJetiExBusTelemetry(void)
     //if (batteryConfig()->voltageMeterSource != VOLTAGE_METER_NONE) {
     if (batteryMetersConfig()->voltage.type != VOLTAGE_SENSOR_NONE) {
         bitArraySet(&exSensorEnabled, EX_VOLTAGE);
+        LOG_D(SYSTEM,"Jeti - Telemetry - EX_VOLTAGE enabled\n");
     }
     //if (batteryConfig()->currentMeterSource != CURRENT_METER_NONE) {
     if (batteryMetersConfig()->current.type != CURRENT_SENSOR_NONE) {
         bitArraySet(&exSensorEnabled, EX_CURRENT);
+        LOG_D(SYSTEM,"Jeti - Telemetry - EX_CURRENT enabled\n");
     }
     //if ((batteryConfig()->voltageMeterSource != VOLTAGE_METER_NONE) && (batteryConfig()->currentMeterSource != CURRENT_METER_NONE)) {
     if ((batteryMetersConfig()->voltage.type != VOLTAGE_SENSOR_NONE) && (batteryMetersConfig()->current.type != CURRENT_SENSOR_NONE)) {
         bitArraySet(&exSensorEnabled, EX_POWER);
         bitArraySet(&exSensorEnabled, EX_CAPACITY);
+        LOG_D(SYSTEM,"Jeti - Telemetry - EX_POWER and CAPACITY enabled\n");
     }
     if (sensors(SENSOR_BARO)) {
         bitArraySet(&exSensorEnabled, EX_ALTITUDE);
+        LOG_D(SYSTEM,"Jeti - Telemetry - EX_ALTITUDE enabled\n");
 #ifdef USE_VARIO
         bitArraySet(&exSensorEnabled, EX_VARIO);
+        LOG_D(SYSTEM,"Jeti - Telemetry - EX_VARIO enabled\n");
 #endif
     }
     if (sensors(SENSOR_ACC)) {
@@ -287,9 +294,11 @@ void initJetiExBusTelemetry(void)
         bitArraySet(&exSensorEnabled, EX_GFORCE_X);
         bitArraySet(&exSensorEnabled, EX_GFORCE_Y);
         bitArraySet(&exSensorEnabled, EX_GFORCE_Z);
+        LOG_D(SYSTEM,"Jeti - Telemetry - EX_ANGEL AND GFORCE enabled\n");
     }
     if (sensors(SENSOR_MAG)) {
         bitArraySet(&exSensorEnabled, EX_HEADING);
+        LOG_D(SYSTEM,"Jeti - Telemetry - EX_HEADIN (MAG) enabled\n");
     }
 
     // from betaflight
